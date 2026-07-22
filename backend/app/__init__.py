@@ -1,0 +1,1 @@
+"""Recycle classification API package."""

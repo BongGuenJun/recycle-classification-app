@@ -85,3 +85,18 @@ def test_predict_rejects_unsupported_file_type():
         )
 
     assert response.status_code == 415
+
+
+def test_visualize_prediction_returns_annotated_jpeg():
+    with TestClient(create_app(FakePredictor())) as client:
+        response = client.post(
+            "/predict/visualize?confidence_threshold=0.15",
+            files={"image": ("sample.jpg", make_jpeg(), "image/jpeg")},
+        )
+
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "image/jpeg"
+    assert response.headers["x-detection-count"] == "1"
+
+    annotated = Image.open(BytesIO(response.content))
+    assert annotated.size == (320, 240)

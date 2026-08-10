@@ -9,7 +9,7 @@ from PIL import Image
 MODEL_PATH = (
     Path(__file__).resolve().parents[2]
     / "models"
-    / "recycle_yolo_1stage_9class.pt"
+    / "recycle_yolo_1stage_9class_bboxfixed.pt"
 )
 
 

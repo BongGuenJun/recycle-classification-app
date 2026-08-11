@@ -85,6 +85,8 @@ class OneStagePredictor:
                         "material": material,
                         "dirtiness": dirtiness,
                         "confidence": round(float(confidence), 4),
+                        "detector_confidence": round(float(confidence), 4),
+                        "classifier_confidence": None,
                     }
                 )
 

@@ -1,0 +1,1 @@
+export const colors = { ink:'#1E2A24', muted:'#68756E', green:'#2E7D5B', greenDark:'#1F5F44', mint:'#DFF2E8', pale:'#F4F7F2', white:'#FFFFFF', line:'#DCE5DF', amber:'#F4A340', red:'#D9534F', black:'#111815' };

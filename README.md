@@ -32,30 +32,31 @@
 > 모델 가중치는 Git LFS로 관리됩니다. 저장소를 내려받은 뒤 모델 파일이 정상적으로 받아졌는지 확인해야 합니다.
 
 ### 1. 저장소 복제
-
+```
 git clone https://github.com/BongGuenJun/recycle-classification-app.git
 cd recycle-classification-app
 git lfs pull
+```
 
 ### 2. 백엔드 실행
-
+```
 cd backend
 python -m venv venv
 .\venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 pip install -r requirements.txt
 python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
-
+```
 ### 3. 프론트엔드 환경변수 설정
-
+```
 cd frontend
 Copy-Item .env.example .env
-
+```
 ### 4. Expo 앱 실행
-
+```
 npm install
 npx expo start
-
+```
 ## 앱 시연
 
 <p align="center">

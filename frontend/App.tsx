@@ -10,7 +10,14 @@ import { HistoryScreen } from './src/screens/HistoryScreen';
 import { AnalysisLog, CameraMode, MaterialId, Pipeline, Screen } from './src/types';
 import { resetSessionFiles } from './src/sessionFiles';
 
-const SERVER_URL = process.env.EXPO_PUBLIC_API_URL;
+function requireApiUrl(): string {
+  const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+
+  if (!apiUrl) {
+    throw new Error(
+      'EXPO_PUBLIC_API_URL이 설정되지 않았습니다. frontend/.env 파일을 확인하세요.',
+    );
+  }
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('home');

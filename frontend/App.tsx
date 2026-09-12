@@ -10,7 +10,7 @@ import { HistoryScreen } from './src/screens/HistoryScreen';
 import { AnalysisLog, CameraMode, MaterialId, Pipeline, Screen } from './src/types';
 import { resetSessionFiles } from './src/sessionFiles';
 
-const SERVER_URL = 'https://comprised-target-trapping.ngrok-free.dev';
+const SERVER_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('home');

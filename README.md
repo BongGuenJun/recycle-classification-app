@@ -218,8 +218,7 @@ YOLOv8n이 먼저 재질과 bbox를 예측하고, bbox에 5% padding을 적용�
 
 ## 외부 실사용 환경 테스트
 
-동일 출처 validation만으로 실제 사용 가능성을 판단하지 않기 위해 직접 촬영·라벨링한 외부 테스트셋을 구성했습니다.
-해당 평가는 외부 환경에서의 취약점 확인용 평가 입니다.
+동일 출처 validation만으로 실제 사용 가능성을 판단하지 않기 위해 직접 촬영하고 라벨링한 외부 테스트셋을 구성했습니다. 이 평가는 일반화 성능을 확정하기 위한 대규모 벤치마크가 아니라, 학습 환경과 다른 외부 환경에서 모델의 취약점을 확인하기 위한 평가입니다.
 
 - 이미지: 67장
 - GT 객체: 78개
@@ -353,7 +352,7 @@ Oracle 결과만으로 특정 원인의 기여도를 확정할 수는 없지만,
 ## 프로젝트 구조
 
 ```text
-recycleApp/
+recycle-classification-app/
 ├── backend/
 │   ├── app/
 │   │   ├── main.py
@@ -361,14 +360,23 @@ recycleApp/
 │   │   └── services/
 │   │       ├── one_stage.py
 │   │       └── two_stage.py
+│   ├── models/
+│   │   ├── recycle_yolo_1stage_9class_bboxfixed.pt
+│   │   ├── yolo_2stage_material3_bboxfixed.pt
+│   │   └── classifier_resnet18_dirty3_bboxfixed_pad005.pt
 │   ├── tests/
 │   └── requirements.txt
 ├── frontend/
 │   ├── App.tsx
+│   ├── .env.example
 │   ├── src/
 │   └── assets/
+├── notebooks/
+│   ├── README.md
+│   └── 01~08 학습·평가 노트북
 ├── docs/
 │   └── assets/
+├── LICENSE
 └── README.md
 ```
 

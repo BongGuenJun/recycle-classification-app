@@ -141,7 +141,6 @@ YOLOv8n이 먼저 재질과 bbox를 예측하고, bbox에 5% padding을 적용�
 
 표본을 확인하면 원천 validation은 야외 바닥에 놓인 단일 객체가 많습니다. 반면 외부 테스트에는 손 가림, 세워진 객체, 생활 배경, 어두운 조명과 다중 객체가 포함됩니다. 이 촬영 조건 차이를 별도의 외부 테스트로 검증했습니다.
 
-> 데이터 변환 과정에서 bbox 좌표 형식 오류를 발견해 변환 로직과 전체 라벨을 수정·재검증한 후 모든 최종 모델을 다시 학습했습니다. 잘못된 bbox로 학습한 결과는 최종 성능 비교에서 제외했습니다.
 
 ## 학습 결과
 
@@ -380,29 +379,6 @@ recycle-classification-app/
 └── README.md
 ```
 
-## 실행 방법
-
-### Backend
-
-```powershell
-cd backend
-python -m venv venv
-.\venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
-```
-
-모델 weight 경로와 앱의 API 주소는 실행 환경에 맞게 설정해야 합니다.
-
-### Frontend
-
-```bash
-cd frontend
-npm install
-npx expo start
-```
-
-모바일 기기와 서버 PC는 서로 접근 가능한 네트워크에 연결되어야 합니다.
 
 ## 프로젝트를 통해 확인한 점
 
@@ -411,6 +387,12 @@ npx expo start
 이 프로젝트는 높은 validation 수치 제시에 그치지 않고, 실제 사용 과정에서 발생한 실패를 정량화하고 다음 개선 방향을 도출하는 데 목적을 둡니다.
 
 ---
+
+## 라이선스
+
+프로젝트 소스 코드는 [MIT License](LICENSE)를 따릅니다.
+
+AI Hub 원본 데이터는 본 저장소에 포함하지 않으며, 데이터 이용 조건은 AI Hub의 해당 데이터셋 이용 정책을 따릅니다.
 
 ### English Summary
 

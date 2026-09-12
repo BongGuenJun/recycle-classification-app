@@ -33,14 +33,12 @@
 
 ### 1. 저장소 복제
 
-```powershell
 git clone https://github.com/BongGuenJun/recycle-classification-app.git
 cd recycle-classification-app
 git lfs pull
 
 ### 2. 백엔드 실행
 
-```powershell
 cd backend
 python -m venv venv
 .\venv\Scripts\Activate.ps1
@@ -50,13 +48,11 @@ python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
 
 ### 3. 프론트엔드 환경변수 설정
 
-```powershell
 cd frontend
 Copy-Item .env.example .env
 
 ### 4. Expo 앱 실행
 
-```powershell
 npm install
 npx expo start
 

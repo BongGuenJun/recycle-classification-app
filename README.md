@@ -19,6 +19,7 @@
 
 데이터 전처리부터 모델 학습, 내부 End-to-End 검증, 외부 테스트까지의 실행 순서는 [notebooks/README.md](notebooks/README.md)에서 확인할 수 있습니다.
 
+
 ## 앱 시연
 
 <p align="center">
@@ -28,6 +29,7 @@
 원본 영상: [앱 시연 영상](docs/assets/app_demo.mp4)
 
 앱에서는 1-stage와 2-stage 모델을 전환할 수 있으며, 수동·자동 촬영 후 탐지 bbox, 재질, 오염 상태, confidence와 분리배출 안내를 확인할 수 있습니다.
+
 
 ### 데이터 변환 기준
 

@@ -21,14 +21,44 @@
 
 ## 실행 방법
 
+### 사전 요구사항
+
+- Python 3.11
+- Node.js
+- Git LFS
+- Expo Go가 설치된 Android 또는 iOS 기기
+- 모바일 기기와 백엔드 PC가 서로 접근 가능한 네트워크
+
+> 모델 가중치는 Git LFS로 관리됩니다. 저장소를 내려받은 뒤 모델 파일이 정상적으로 받아졌는지 확인해야 합니다.
+
 ### 1. 저장소 복제
+
+```powershell
+git clone https://github.com/BongGuenJun/recycle-classification-app.git
+cd recycle-classification-app
+git lfs pull
 
 ### 2. 백엔드 실행
 
+```powershell
+cd backend
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+
 ### 3. 프론트엔드 환경변수 설정
+
+```powershell
+cd frontend
+Copy-Item .env.example .env
 
 ### 4. Expo 앱 실행
 
+```powershell
+npm install
+npx expo start
 
 ## 앱 시연
 

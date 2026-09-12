@@ -29,6 +29,22 @@
 
 앱에서는 1-stage와 2-stage 모델을 전환할 수 있으며, 수동·자동 촬영 후 탐지 bbox, 재질, 오염 상태, confidence와 분리배출 안내를 확인할 수 있습니다.
 
+### 데이터 변환 기준
+
+원본 데이터는 AI Hub의 [재활용품 분류 및 선별 데이터](https://www.aihub.or.kr/aihubdata/data/view.do?dataSetSn=71362)를 사용했습니다.
+
+원본 어노테이션의 재질, 오염 상태, 객체 좌표 정보를 다음과 같이 프로젝트 분류 체계로 변환했습니다.
+
+- 재질: `can`, `pet`, `plastic`
+- 오염 상태: `clean`, `outer`, `inner`
+- 1-stage: 재질과 오염 상태를 조합한 9개 클래스
+- 2-stage: YOLO가 3개 재질을 탐지하고, ResNet18이 crop 이미지의 오염 상태를 분류
+- 객체 좌표: 원본 어노테이션의 객체 영역을 YOLO 형식의 정규화된 bbox로 변환
+
+구체적인 변환 코드는
+[`01_prepare_raw_dataset.ipynb`](notebooks/01_prepare_raw_dataset.ipynb)와
+[`02_build_yolo_datasets.ipynb`](notebooks/02_build_yolo_datasets.ipynb)에서 확인할 수 있습니다.
+
 ## 문제 정의
 
 최종 클래스는 재질 3종과 오염 상태 3종을 조합한 9개입니다.

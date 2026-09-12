@@ -19,6 +19,11 @@ function requireApiUrl(): string {
     );
   }
 
+  return apiUrl;
+}
+
+const SERVER_URL = requireApiUrl();
+
 export default function App() {
   const [screen, setScreen] = useState<Screen>('home');
   const [cameraMode, setCameraMode] = useState<CameraMode>('manual');

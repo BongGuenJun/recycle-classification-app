@@ -15,6 +15,48 @@
 - 손 가림, 복잡한 배경, 조도 변화, 다중 객체 조건별 실패 원인 분석
 - GT crop을 이용한 Oracle 평가로 2-stage 병목 구간 분리
 
+## 학습 및 평가 코드
+
+데이터 전처리부터 모델 학습, 내부 End-to-End 검증, 외부 테스트까지의 실행 순서는 [notebooks/README.md](notebooks/README.md)에서 확인할 수 있습니다.
+
+## 실행 방법
+
+### 사전 요구사항
+
+- Python 3.11
+- Node.js
+- Git LFS
+- Expo Go가 설치된 Android 또는 iOS 기기
+- 모바일 기기와 백엔드 PC가 서로 접근 가능한 네트워크
+
+> 모델 가중치는 Git LFS로 관리됩니다. 저장소를 내려받은 뒤 모델 파일이 정상적으로 받아졌는지 확인해야 합니다.
+
+### 1. 저장소 복제
+```
+git clone https://github.com/BongGuenJun/recycle-classification-app.git
+cd recycle-classification-app
+git lfs pull
+```
+
+### 2. 백엔드 실행
+```
+cd backend
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
+### 3. 프론트엔드 환경변수 설정
+```
+cd frontend
+Copy-Item .env.example .env
+```
+### 4. Expo 앱 실행
+```
+npm install
+npx expo start
+```
 ## 앱 시연
 
 <p align="center">
@@ -24,6 +66,23 @@
 원본 영상: [앱 시연 영상](docs/assets/app_demo.mp4)
 
 앱에서는 1-stage와 2-stage 모델을 전환할 수 있으며, 수동·자동 촬영 후 탐지 bbox, 재질, 오염 상태, confidence와 분리배출 안내를 확인할 수 있습니다.
+
+
+### 데이터 변환 기준
+
+원본 데이터는 AI Hub의 [재활용품 분류 및 선별 데이터](https://www.aihub.or.kr/aihubdata/data/view.do?dataSetSn=71362)를 사용했습니다.
+
+원본 어노테이션의 재질, 오염 상태, 객체 좌표 정보를 다음과 같이 프로젝트 분류 체계로 변환했습니다.
+
+- 재질: `can`, `pet`, `plastic`
+- 오염 상태: `clean`, `outer`, `inner`
+- 1-stage: 재질과 오염 상태를 조합한 9개 클래스
+- 2-stage: YOLO가 3개 재질을 탐지하고, ResNet18이 crop 이미지의 오염 상태를 분류
+- 객체 좌표: 원본 어노테이션의 객체 영역을 YOLO 형식의 정규화된 bbox로 변환
+
+구체적인 변환 코드는
+[`01_prepare_raw_dataset.ipynb`](notebooks/01_prepare_raw_dataset.ipynb)와
+[`02_build_yolo_datasets.ipynb`](notebooks/02_build_yolo_datasets.ipynb)에서 확인할 수 있습니다.
 
 ## 문제 정의
 
@@ -82,7 +141,6 @@ YOLOv8n이 먼저 재질과 bbox를 예측하고, bbox에 5% padding을 적용�
 
 표본을 확인하면 원천 validation은 야외 바닥에 놓인 단일 객체가 많습니다. 반면 외부 테스트에는 손 가림, 세워진 객체, 생활 배경, 어두운 조명과 다중 객체가 포함됩니다. 이 촬영 조건 차이를 별도의 외부 테스트로 검증했습니다.
 
-> 데이터 변환 과정에서 bbox 좌표 형식 오류를 발견해 변환 로직과 전체 라벨을 수정·재검증한 후 모든 최종 모델을 다시 학습했습니다. 잘못된 bbox로 학습한 결과는 최종 성능 비교에서 제외했습니다.
 
 ## 학습 결과
 
@@ -159,7 +217,7 @@ YOLOv8n이 먼저 재질과 bbox를 예측하고, bbox에 5% padding을 적용�
 
 ## 외부 실사용 환경 테스트
 
-동일 출처 validation만으로 실제 사용 가능성을 판단하지 않기 위해 직접 촬영·라벨링한 외부 테스트셋을 구성했습니다.
+동일 출처 validation만으로 실제 사용 가능성을 판단하지 않기 위해 직접 촬영하고 라벨링한 외부 테스트셋을 구성했습니다. 이 평가는 일반화 성능을 확정하기 위한 대규모 벤치마크가 아니라, 학습 환경과 다른 외부 환경에서 모델의 취약점을 확인하기 위한 평가입니다.
 
 - 이미지: 67장
 - GT 객체: 78개
@@ -293,7 +351,7 @@ Oracle 결과만으로 특정 원인의 기여도를 확정할 수는 없지만,
 ## 프로젝트 구조
 
 ```text
-recycleApp/
+recycle-classification-app/
 ├── backend/
 │   ├── app/
 │   │   ├── main.py
@@ -301,40 +359,26 @@ recycleApp/
 │   │   └── services/
 │   │       ├── one_stage.py
 │   │       └── two_stage.py
+│   ├── models/
+│   │   ├── recycle_yolo_1stage_9class_bboxfixed.pt
+│   │   ├── yolo_2stage_material3_bboxfixed.pt
+│   │   └── classifier_resnet18_dirty3_bboxfixed_pad005.pt
 │   ├── tests/
 │   └── requirements.txt
 ├── frontend/
 │   ├── App.tsx
+│   ├── .env.example
 │   ├── src/
 │   └── assets/
+├── notebooks/
+│   ├── README.md
+│   └── 01~08 학습·평가 노트북
 ├── docs/
 │   └── assets/
+├── LICENSE
 └── README.md
 ```
 
-## 실행 방법
-
-### Backend
-
-```powershell
-cd backend
-python -m venv venv
-.\venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
-```
-
-모델 weight 경로와 앱의 API 주소는 실행 환경에 맞게 설정해야 합니다.
-
-### Frontend
-
-```bash
-cd frontend
-npm install
-npx expo start
-```
-
-모바일 기기와 서버 PC는 서로 접근 가능한 네트워크에 연결되어야 합니다.
 
 ## 프로젝트를 통해 확인한 점
 
@@ -343,6 +387,12 @@ npx expo start
 이 프로젝트는 높은 validation 수치 제시에 그치지 않고, 실제 사용 과정에서 발생한 실패를 정량화하고 다음 개선 방향을 도출하는 데 목적을 둡니다.
 
 ---
+
+## 라이선스
+
+프로젝트 소스 코드는 [MIT License](LICENSE)를 따릅니다.
+
+AI Hub 원본 데이터는 본 저장소에 포함하지 않으며, 데이터 이용 조건은 AI Hub의 해당 데이터셋 이용 정책을 따릅니다.
 
 ### English Summary
 

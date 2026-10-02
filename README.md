@@ -268,9 +268,9 @@ YOLOv8n이 먼저 재질과 bbox를 예측하고, bbox에 5% padding을 적용�
   <img src="docs/assets/two_stage_performance_decomposition_ko.png" width="900" alt="2-stage 파이프라인 성능 분해" />
 </p>
 
-2-stage 오염도 분류기의 동일 출처 validation 정확도는 **81.7%**였으며, 외부 데이터에서 GT bbox와 GT 재질을 제공한 Oracle 정확도는 **74.4%**였습니다. 이는 외부 촬영 환경에서도 분류기가 일정 수준 작동했지만 동일 출처 validation보다 성능이 낮아졌음을 보여줍니다.
+2-stage 오염도 분류기의 동일 출처 validation 정확도는 **81.7%** 였으며, 외부 데이터에서 GT bbox와 GT 재질을 제공한 Oracle 정확도는 **74.4%**였습니다. 이는 외부 촬영 환경에서도 분류기가 일정 수준 작동했지만 동일 출처 validation보다 성능이 낮아졌음을 보여줍니다.
 
-반면 실제 detector 출력을 사용한 외부 데이터 End-to-End 정확도는 **29.5%**로 감소했습니다. Oracle 평가는 GT bbox뿐 아니라 GT 재질까지 함께 제공하므로, Oracle과 End-to-End 사이의 **44.9%p 차이를 bbox 오차만의 영향으로 해석할 수는 없습니다.** 해당 차이에는 다음 요인이 함께 포함됩니다.
+반면 실제 detector 출력을 사용한 외부 데이터 End-to-End 정확도는 **29.5%** 로 감소했습니다. Oracle 평가는 GT bbox뿐 아니라 GT 재질까지 함께 제공하므로, Oracle과 End-to-End 사이의 **44.9%p 차이를 bbox 오차만의 영향으로 해석할 수는 없습니다.** 해당 차이에는 다음 요인이 함께 포함됩니다.
 
 - 객체 미검출
 - 재질 오분류

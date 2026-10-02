@@ -48,10 +48,22 @@ pip install -r requirements.txt
 python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 ### 3. 프론트엔드 환경변수 설정
+
+새 PowerShell 터미널을 저장소 루트에서 열고 다음 명령을 실행합니다.
+
 ```
 cd frontend
 Copy-Item .env.example .env
 ```
+
+생성된 `frontend/.env`에 모바일 기기에서 접근 가능한 백엔드 주소를 입력합니다.
+
+```env
+EXPO_PUBLIC_API_URL=http://<BACKEND_PC_IP>:8000
+```
+
+예: `EXPO_PUBLIC_API_URL=http://192.168.0.10:8000`
+
 ### 4. Expo 앱 실행
 ```
 npm install
@@ -130,7 +142,7 @@ YOLOv8n이 먼저 재질과 bbox를 예측하고, bbox에 5% padding을 적용�
 ## 데이터
 
 - 출처: AI Hub 재활용품 분류·선별 데이터
-- 학습 데이터: 약 15,000장
+- 학습 데이터: 13,734장
 - Validation: 3,158장 / 3,158개 객체
 - 현재 validation 구성: 이미지당 객체 1개
 - 입력 크기: YOLO 640, ResNet18 crop 224
@@ -238,7 +250,7 @@ YOLOv8n이 먼저 재질과 bbox를 예측하고, bbox에 5% padding을 적용�
 | Localization recall | 97.9% | 60.3% | 99.8% | 55.1% |
 | 최종 9-class accuracy | 77.4% | 32.1% | 77.5% | 29.5% |
 | 검출 성공 시 9-class accuracy | 79.0% | 53.2% | 77.7% | 53.5% |
-| Mean matched IoU | 98.0% | 88.2% | 98.0% | 88.1% |
+| Mean matched IoU | 98.0% | 88.2% | 98.1% | 88.1% |
 
 외부 환경에서는 두 모델 모두 큰 폭의 성능 저하를 보였습니다. bbox를 찾았을 때의 위치 품질뿐 아니라 객체 자체를 놓치는 비율과 검출 후 클래스 오분류가 함께 증가했습니다.
 
@@ -253,18 +265,47 @@ YOLOv8n이 먼저 재질과 bbox를 예측하고, bbox에 5% padding을 적용�
 ### 2-stage Oracle 분석
 
 <p align="center">
-  <img src="docs/assets/external_oracle_gap.png" width="750" alt="2-stage end-to-end와 Oracle 비교" />
+  <img src="docs/assets/two_stage_performance_decomposition_ko.png" width="900" alt="2-stage 파이프라인 성능 분해" />
 </p>
 
-2-stage 분류기에 detector crop 대신 GT bbox crop을 제공한 Oracle 정확도는 74.4%였습니다. 실제 end-to-end 정확도 29.5%와의 차이는 다음 문제가 함께 작용했음을 보여줍니다.
+2-stage 오염도 분류기의 동일 출처 validation 정확도는 **81.7%**였으며, 외부 데이터에서 GT bbox와 GT 재질을 제공한 Oracle 정확도는 **74.4%**였습니다. 이는 외부 촬영 환경에서도 분류기가 일정 수준 작동했지만 동일 출처 validation보다 성능이 낮아졌음을 보여줍니다.
+
+반면 실제 detector 출력을 사용한 외부 데이터 End-to-End 정확도는 **29.5%**로 감소했습니다. Oracle 평가는 GT bbox뿐 아니라 GT 재질까지 함께 제공하므로, Oracle과 End-to-End 사이의 **44.9%p 차이를 bbox 오차만의 영향으로 해석할 수는 없습니다.** 해당 차이에는 다음 요인이 함께 포함됩니다.
 
 - 객체 미검출
 - 재질 오분류
 - 예측 bbox와 학습에 사용한 GT crop 사이의 차이
 - crop에 포함된 배경·손·다른 객체
-- 실사용 객체와 학습 데이터 사이의 시각적 분포 차이
+- 후단 오염도 분류 오류
 
-Oracle 결과만으로 특정 원인의 기여도를 확정할 수는 없지만, 2-stage 분류기 자체보다 detector와 crop 전달 과정에서 큰 성능 손실이 발생한다는 진단 근거로 사용했습니다.
+세 수치는 서로 다른 입력 조건과 데이터에서 측정됐으므로 단순한 모델 우열 비교가 아니라, **파이프라인 단계와 입력 조건에 따라 어느 구간에서 성능 손실이 발생하는지 확인하기 위한 진단 결과**로 해석했습니다.
+
+### GT crop과 detector crop 비교
+
+2-stage 파이프라인에서 detector 출력이 후단 오염도 분류에 어떤 영향을 주는지 확인하기 위해 외부 테스트 사례의 GT crop과 detector crop을 비교했습니다.
+
+#### 검출된 객체 비교
+
+<p align="center">
+  <img src="docs/assets/two_stage_crop_comparison_matched.jpg" width="900" alt="검출된 객체의 GT crop과 detector crop 비교" />
+</p>
+
+검출에 성공한 사례에서도 서로 다른 실패 원인이 확인됐습니다.
+
+1. **정상 검출 및 분류:** GT bbox와 예측 bbox가 거의 일치한 사례에서는 두 crop이 유사했고 최종 클래스도 올바르게 예측했습니다.
+2. **bbox가 정확하지만 재질 오분류:** IoU가 0.98로 위치는 정확했지만 PET를 plastic으로 판단한 사례가 있었습니다. 이는 bbox 품질과 별개로 detector의 재질 분류에서 오류가 발생할 수 있음을 보여줍니다.
+3. **불완전한 crop과 후단 분류 오류:** IoU가 0.53인 사례에서는 예측 crop에 주변 객체가 함께 포함됐으며, 재질은 올바르게 예측했지만 오염도를 `clean`이 아닌 `outer`로 분류했습니다. 한 사례만으로 인과관계를 확정할 수는 없지만 detector crop의 차이가 후단 분류 입력을 변화시키는 위험을 확인했습니다.
+
+#### 미검출 및 다중 객체 실패
+
+<p align="center">
+  <img src="docs/assets/two_stage_crop_comparison_missed.jpg" width="900" alt="미검출 및 다중 객체 실패 사례" />
+</p>
+
+1. **단일 객체 미검출:** GT bbox와 GT 재질을 사용한 Oracle에서는 정답이었지만 실제 End-to-End 파이프라인에서는 confidence 0.50 이상의 객체가 검출되지 않았습니다. detector가 객체를 찾지 못하면 후단 분류기의 성능과 관계없이 전체 파이프라인은 실패합니다.
+2. **다중 객체 일부 미검출:** 겹쳐 있는 두 객체 중 하나가 독립적으로 검출되지 않고 예측 bbox에 주변 객체가 함께 포함된 사례가 확인됐습니다. 이 사례에서는 Oracle 분류도 오염도를 잘못 예측했으므로 detector뿐 아니라 외부 환경에서의 분류 문제도 함께 존재합니다.
+
+이미지에 사용한 사례의 세부 결과는 [`two_stage_crop_comparison_cases.csv`](docs/assets/two_stage_crop_comparison_cases.csv)에 기록했습니다.
 
 ### 대표 사례
 
@@ -284,6 +325,16 @@ Oracle 결과만으로 특정 원인의 기여도를 확정할 수는 없지만,
 </details>
 
 ## 결과 분석
+
+### 가설 및 검증 결과
+
+| 가설 | 실험 결과 | 판단 |
+|---|---|---|
+| 재질 탐지와 오염도 분류를 분리하면 최종 성능이 향상될 것이다. | 동일 출처 validation의 최종 정확도는 1-stage 77.4%, 2-stage 77.5%로 유사했습니다. | 문제를 분리하는 것만으로 End-to-End 성능이 뚜렷하게 향상되지는 않았습니다. |
+| 재질 3-class detector의 높은 성능이 전체 파이프라인에도 이어질 것이다. | 2-stage detector의 mAP50-95는 97.0%였지만 최종 정확도 우위로 이어지지 않았습니다. | 높은 구성요소 성능이 전체 파이프라인 성능을 보장하지 않았습니다. |
+| 분류기 자체는 외부 데이터에서도 일정 수준 작동할 것이다. | GT bbox와 GT 재질을 사용한 외부 Oracle 정확도는 74.4%였습니다. | 분류기는 일정 수준 작동했지만 동일 출처 validation 81.7%보다 낮았습니다. |
+| 동일 출처 validation 성능으로 실제 사용 성능을 예상할 수 있을 것이다. | 외부 정확도는 1-stage 32.1%, 2-stage 29.5%로 감소했습니다. | 동일 출처 validation만으로 자유로운 모바일 촬영 환경의 성능을 판단하기 어려웠습니다. |
+| 2-stage 실패는 후단 분류기의 문제로 설명할 수 있을 것이다. | Oracle과 End-to-End 사이에 큰 차이가 있었고 미검출, 재질 오류, crop 차이와 후단 분류 오류가 함께 확인됐습니다. | 한 구성요소보다 여러 단계의 오류 누적이 주요 손실 원인이었습니다. |
 
 ### 1. 학습 데이터와 사용 환경의 차이
 
@@ -336,6 +387,16 @@ Oracle 결과만으로 특정 원인의 기여도를 확정할 수는 없지만,
 - 2-stage 예측 crop과 GT crop을 비교하는 crop quality audit
 - 작업자 보조 목적에 맞춰 recall 중심 threshold 재조정
 
+## 결론
+
+본 프로젝트는 재활용품의 재질과 오염 상태를 판별하기 위해 1-stage와 2-stage 구조를 구현하고, 동일 출처 validation과 직접 촬영한 외부 데이터에서 End-to-End 성능을 비교했습니다.
+
+문제를 재질 탐지와 오염도 분류로 분리한 2-stage 구조는 각 구성요소의 문제를 단순화할 수 있었지만, detector의 미검출과 재질 오분류, crop 차이, 후단 분류 오류가 누적되면서 최종 성능 향상으로 이어지지 않았습니다. 동일 출처 validation에서 1-stage와 2-stage의 최종 정확도는 각각 77.4%와 77.5%로 유사했으며, 외부 데이터에서는 각각 32.1%와 29.5%로 감소했습니다.
+
+외부 Oracle 실험에서는 GT bbox와 GT 재질을 제공했을 때 2-stage 오염도 분류 정확도가 74.4%까지 회복됐습니다. 이를 통해 분류기 자체의 외부 환경 성능 저하뿐 아니라 객체 탐지, 재질 예측과 crop 생성 과정도 End-to-End 성능 손실에 영향을 준다는 것을 확인했습니다. 다만 Oracle과 End-to-End의 차이는 여러 요인이 결합된 결과이므로 bbox 오차 하나로만 해석하지 않았습니다.
+
+결과적으로 동일한 데이터 분포의 validation 성능만으로 실제 서비스 성능을 판단하기 어렵고, 서비스 입력 환경을 먼저 정의한 뒤 이를 반영한 데이터 수집과 평가가 필요하다는 점을 확인했습니다. 현재 모델은 자유로운 모바일 촬영 환경에서 완전 자동 판별 시스템으로 사용하기에는 한계가 있으며, 통제된 촬영 환경에서 사용자의 판단을 보조하는 프로토타입으로 범위를 한정하는 것이 타당합니다.
+
 ## 기술 스택
 
 | 영역 | 기술 |
@@ -379,14 +440,6 @@ recycle-classification-app/
 └── README.md
 ```
 
-
-## 프로젝트를 통해 확인한 점
-
-동일 출처 validation에서 높은 지표를 얻는 것과 실제 사용 환경에서 안정적으로 동작하는 것은 다른 문제였습니다. 모델을 서버와 앱에 연결하고 외부 데이터를 직접 수집해 평가하면서 데이터 분포, 라벨 정의, 다중 객체, threshold와 파이프라인 오류 전파가 최종 성능에 미치는 영향을 확인했습니다.
-
-이 프로젝트는 높은 validation 수치 제시에 그치지 않고, 실제 사용 과정에서 발생한 실패를 정량화하고 다음 개선 방향을 도출하는 데 목적을 둡니다.
-
----
 
 ## 라이선스
 
